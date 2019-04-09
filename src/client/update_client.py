@@ -1,11 +1,17 @@
 import socket
 
-FILE = 'dummy/dummy'
+FILE = 'update.tar'
 BOX = '127.0.0.1'
 PORT = 12346
 
 sock = socket.socket()
-sock.connect((BOX, PORT))
+
+while True:
+    try:
+        con = sock.connect((BOX, PORT))
+        break
+    except:
+    	pass
 print('Connected to photobox')
 
 with open(FILE, 'rb') as f:
