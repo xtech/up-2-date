@@ -1,16 +1,14 @@
-import sys
 import socket
 
-SERVER = sys.argv[1]
-PORT = int(sys.argv[2])
-FILE = sys.argv[3]
+FILE = 'dummy/dummy'
+BOX = '127.0.0.1'
+PORT = 12346
 
 sock = socket.socket()
-sock.connect((SERVER, PORT))
+sock.connect((BOX, PORT))
+print('Connected to photobox')
 
-with open(FILE, 'wb') as f:
-    chunk = sock.recv(1024)
-    while (chunk):
-        f.write(chunk)
-        chunk = sock.recv(1024)
+with open(FILE, 'rb') as f:
+    sock.sendfile(f, 0)
+print('Sent file')
 sock.close()

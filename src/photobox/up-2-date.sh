@@ -1,13 +1,13 @@
 #!/bin/sh
 
-SERVER='127.0.0.1'
+ADDRESS='127.0.0.1'
 PORT=12346
 BIN="./dummy"
 
 update()
 {
     echo "Updating"
-    python3 update_client.py $SERVER $PORT $BIN
+    python3 update_server.py $ADDRESS $PORT $BIN
     chmod +x $BIN
 }
 
