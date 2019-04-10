@@ -7,36 +7,45 @@ DIRECTORY="install_path"
 NAME="dummy"
 BINARY="dummy"
 
+TIMEOUT=10 # seconds
+
 BIN="$DIRECTORY/$NAME/$BINARY"
 
 update()
 {
     echo "Updating"
-    python3 update_server.py $ADDRESS $PORT "update.tar"
+
+    python3 update_server.py $ADDRESS $PORT "update.tar" $TIMEOUT
+    if [ ! $? -eq 0 ]
+    then
+        echo "Transmission failed"
+        return 1
+    fi
+
     tar xf update.tar
     gpg --verify "$NAME.sig" "$NAME.tar"
-    if [ $? -eq 0 ]
+    if [ ! $? -eq 0 ]
     then
-        echo "Verification successful"
-        if [ ! -d $DIRECTORY ]; then
-            mkdir $DIRECTORY
-        fi
-        tar xf "$NAME.tar" -C $DIRECTORY
-        chmod +x $BIN
-        rm "update.tar" "$NAME.sig" "$NAME.tar"
-        echo "Update successful"
-    else
         echo "Verification failed"
+        return 2
     fi
+
+    if [ ! -d $DIRECTORY ]; then
+        mkdir $DIRECTORY
+    fi
+    tar xf "$NAME.tar" -C $DIRECTORY
+    chmod +x $BIN
+    rm "update.tar" "$NAME.sig" "$NAME.tar"
+    echo "Update successful"
 }
 
 while [ true ]
 do
-    if [ ! -f $BIN ]
-    then 
+    while [ ! -f $BIN ]
+    do 
         echo "Missing binary"
         update
-    fi
+    done
 
     echo "Starting"
     eval $BIN
