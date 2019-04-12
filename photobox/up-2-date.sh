@@ -41,7 +41,7 @@ do
     done
 
     echo "Starting"
-    (cd install_path && eval $NAME/$BINARY)
+    (cd $DIRECTORY && eval $NAME/$BINARY)
     ret=$?
 
     if [ $ret -eq 1 ]
