@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <fstream>
+#include <chrono>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -8,10 +9,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <SFML/Graphics.hpp>
+
 using namespace std;
 
-int main(int argc, char *argv[]) {
-
+int transmission(int argc, char *argv[]) {
     // Get args
     if(argc != 5) {
         cerr << "Wrong number of arguments" << endl;
@@ -103,5 +105,47 @@ int main(int argc, char *argv[]) {
     // Close
     close(sock2);
     close(sock);
+
     return EXIT_SUCCESS;
+}
+
+int main(int argc, char *argv[]) {
+    // Show update screen
+    sf::RenderWindow window(sf::VideoMode(1280, 800), "self-o-mat");
+    sf::Font font;
+    font.loadFromFile("AlegreyaSans-Bold.ttf");
+    sf::Text text;
+    text.setFont(font);
+    text.setString("Updating");
+    text.setCharacterSize(50);
+    text.setFillColor(sf::Color(200, 0, 0));
+    text.setStyle(sf::Text::Bold);
+    const auto start = std::chrono::steady_clock::now();
+    window.clear();
+    window.draw(text);
+    window.display();
+
+    bool success = transmission(argc, argv);
+
+    // Show update screen for at least 5 seconds
+    const auto end = std::chrono::steady_clock::now();
+    auto d = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
+    if(d < 5)
+        sleep(5-d);
+
+    // Show result
+    if(!success) {
+        text.setString("Update successful");
+        text.setFillColor(sf::Color::Green);
+    } else {
+        text.setString("Update failed");
+        text.setFillColor(sf::Color::Red);
+    }
+    window.clear();
+    window.draw(text);
+    window.display();
+    sleep(5);
+    window.close();
+
+    return success;
 }
