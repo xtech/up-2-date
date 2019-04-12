@@ -15,30 +15,20 @@ update()
 {
     echo "Updating"
 
-    # Receive tar 
-    ./update_server $PORT $TIMEOUT $TAR
-    if [ ! $? -eq 0 ] || [ ! -f $TAR ]
-    then
-        echo "Transmission failed"
-        return 1
-    fi
-
-    # Verify signature
-    tar xf $TAR
-    gpg --verify $NAME.sig $NAME.tar
+    # Receive and verify tar 
+    ./update_server $PORT $TIMEOUT $TAR $NAME
     if [ ! $? -eq 0 ]
     then
-        echo "Verification failed"
-        return 2
+        return 1
     fi
 
     # Unpack and install
     if [ ! -d $DIRECTORY ]; then
         mkdir $DIRECTORY
     fi
-    tar xf $NAME.tar -C $DIRECTORY
+    tar xf $NAME.tar.gz -C $DIRECTORY
     chmod +x $BIN
-    rm $TAR $NAME.sig $NAME.tar
+    rm $TAR $NAME.sig $NAME.tar.gz
     echo "Update successful"
 }
 

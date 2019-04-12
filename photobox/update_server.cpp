@@ -13,13 +13,14 @@ using namespace std;
 int main(int argc, char *argv[]) {
 
     // Get args
-    if(argc != 4) {
+    if(argc != 5) {
         cerr << "Wrong number of arguments" << endl;
         return EXIT_FAILURE;
     }
     int port = atoi(argv[1]);
     int timeout = atoi(argv[2]);
     string filename = argv[3];
+    string contentname = argv[4];
 
     // Socket
     int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -87,8 +88,16 @@ int main(int argc, char *argv[]) {
     }
     cout << "Received file" << endl;
 
+    // Verify signature
+    system(("tar xf "+filename+" >/dev/null 2>&1").c_str());
+    if(system(("gpg --verify "+contentname+".sig "+contentname+".tar.gz").c_str()) != 0) {
+        cerr << "Verification failed" << endl;
+        return EXIT_FAILURE;
+    }
+    cout << "Verification successful" << endl;
+
     // Send acknowledgement
-    const char* msg = "Received file";
+    const char* msg = "Received update";
     send(sock2, msg, strlen(msg), 0);
 
     // Close

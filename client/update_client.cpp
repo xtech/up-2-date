@@ -66,12 +66,12 @@ int main(int argc, char *argv[]) {
     cout << "Sent file" << endl;
 
     // Receive acknowledgement
-    char buffer[14];
-    recv(sock, buffer, 14, 0);
+    char buffer[16];
+    recv(sock, buffer, 16, 0);
     close(sock);
 
     // Check
-    if(!strcmp(buffer, "Received file") && num_bytes_sent == num_bytes_read) {
+    if(!strcmp(buffer, "Received update") && num_bytes_sent == num_bytes_read) {
         cout << "Success" << endl;
         return EXIT_SUCCESS;
     } else {

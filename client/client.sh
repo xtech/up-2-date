@@ -12,10 +12,10 @@ TIMEOUT=60 #seconds
 g++ dummy/main.cpp -o dummy/dummy
 
 # pack and sign
-tar cfz $NAME.tar $FILES
-gpg --quiet --batch --yes --output $NAME.sig --detach-sig $NAME.tar
-tar cfz $TAR $NAME.tar $NAME.sig
-rm $NAME.tar $NAME.sig
+tar cfz $NAME.tar.gz $FILES
+gpg --quiet --batch --yes --output $NAME.sig --detach-sig $NAME.tar.gz
+tar cf $TAR $NAME.tar.gz $NAME.sig
+rm $NAME.tar.gz $NAME.sig
 
 # send
 ./update_client $IP $PORT $TIMEOUT $TAR
