@@ -37,6 +37,11 @@ int transmission(int argc, char *argv[], int sock, int sock2) {
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
+    int opt = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        cerr << "Error in setsockopt" << endl;
+        return EXIT_FAILURE;
+    }
     if(bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
         cerr << "Error in bind" << endl;
         return EXIT_FAILURE;
