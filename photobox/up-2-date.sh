@@ -16,7 +16,7 @@ update()
     echo "Updating"
 
     # Receive tar 
-    python3 update_server.py $PORT $TIMEOUT $TAR
+    ./update_server $PORT $TIMEOUT $TAR
     if [ ! $? -eq 0 ] || [ ! -f $TAR ]
     then
         echo "Transmission failed"

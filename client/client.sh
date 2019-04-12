@@ -18,7 +18,7 @@ tar cfz $TAR $NAME.tar $NAME.sig
 rm $NAME.tar $NAME.sig
 
 # send
-python3 update_client.py $IP $PORT $TIMEOUT $TAR
+./update_client $IP $PORT $TIMEOUT $TAR
 
 # remove update file
 rm $TAR
