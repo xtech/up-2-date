@@ -1,41 +1,44 @@
 #!/bin/sh
 
-ADDRESS="127.0.0.1"
 PORT=12346
 
-DIRECTORY="install_path"
-NAME="dummy"
-BINARY="dummy"
+DIRECTORY=install_path
+NAME=dummy
+BINARY=dummy
+TAR=update.tar
 
-TIMEOUT=10 # seconds
+TIMEOUT=60 #seconds
 
-BIN="$DIRECTORY/$NAME/$BINARY"
+BIN=$DIRECTORY/$NAME/$BINARY
 
 update()
 {
     echo "Updating"
 
-    python3 update_server.py $ADDRESS $PORT "update.tar" $TIMEOUT
-    if [ ! $? -eq 0 ]
+    # Receive tar 
+    python3 update_server.py $PORT $TIMEOUT $TAR
+    if [ ! $? -eq 0 ] || [ ! -f $TAR ]
     then
         echo "Transmission failed"
         return 1
     fi
 
-    tar xf update.tar
-    gpg --verify "$NAME.sig" "$NAME.tar"
+    # Verify signature
+    tar xf $TAR
+    gpg --verify $NAME.sig $NAME.tar
     if [ ! $? -eq 0 ]
     then
         echo "Verification failed"
         return 2
     fi
 
+    # Unpack and install
     if [ ! -d $DIRECTORY ]; then
         mkdir $DIRECTORY
     fi
-    tar xf "$NAME.tar" -C $DIRECTORY
+    tar xf $NAME.tar -C $DIRECTORY
     chmod +x $BIN
-    rm "update.tar" "$NAME.sig" "$NAME.tar"
+    rm $TAR $NAME.sig $NAME.tar
     echo "Update successful"
 }
 
