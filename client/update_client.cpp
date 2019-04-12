@@ -55,23 +55,27 @@ int main(int argc, char *argv[]) {
     }
     cout << "Connected" << endl;
 
-    // Send file
+    // Send file size and file
     int f = open(filename, O_RDONLY);
-    struct stat s;
-    fstat(f, &s);
-    int num_bytes_read = s.st_size;
+    struct stat st;
+    fstat(f, &st);
+    uint32_t num_bytes_read = st.st_size;
+    send(sock, &num_bytes_read, 4, 0);
     int num_bytes_sent = sendfile(sock, f, 0, num_bytes_read);
     close(f);
     cout << "Sent file" << endl;
 
-    // Close
+    // Receive acknowledgement
+    char buffer[14];
+    recv(sock, buffer, 14, 0);
     close(sock);
 
-    if(num_bytes_sent != num_bytes_read) {
-        cerr << "Error" << endl;
-        return EXIT_FAILURE;
-    } else {
+    // Check
+    if(!strcmp(buffer, "Received file") && num_bytes_sent == num_bytes_read) {
         cout << "Success" << endl;
         return EXIT_SUCCESS;
+    } else {
+        cerr << "Error" << endl;
+        return EXIT_FAILURE;
     }
 }

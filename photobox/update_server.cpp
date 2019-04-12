@@ -68,18 +68,31 @@ int main(int argc, char *argv[]) {
     }
     cout << "Connected with " << inet_ntoa(client.sin_addr) << endl;
 
-    // Receive file
+    // Receive file size
     char buffer[1024];
-    int num_bytes;
+    int bytes_read = recv(sock2, buffer, 4, 0);
+    if(bytes_read != 4) {
+        cerr << "Wrong filesize" << endl;
+        return EXIT_FAILURE;
+    }
+    int bytes_file;
+    memcpy(&bytes_file, buffer, 4);
+
+    // Receive file
     ofstream f(filename, ios::out | ios::binary);
-    num_bytes = recv(sock2, buffer, 1024, 0);
-    while(num_bytes > 0) {
-        f.write(buffer, num_bytes);
-        num_bytes = recv(sock2, buffer, 1024, 0);
+    while(bytes_file > 0) {
+        bytes_read = recv(sock2, buffer, 1024, 0);
+        f.write(buffer, bytes_read);
+        bytes_file -= bytes_read;
     }
     cout << "Received file" << endl;
 
+    // Send acknowledgement
+    const char* msg = "Received file";
+    send(sock2, msg, strlen(msg), 0);
+
     // Close
     close(sock2);
+    close(sock);
     return EXIT_SUCCESS;
 }
