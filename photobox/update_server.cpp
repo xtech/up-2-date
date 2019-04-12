@@ -13,7 +13,7 @@
 
 using namespace std;
 
-int transmission(int argc, char *argv[]) {
+int transmission(int argc, char *argv[], int sock, int sock2) {
     // Get args
     if(argc != 5) {
         cerr << "Wrong number of arguments" << endl;
@@ -25,7 +25,7 @@ int transmission(int argc, char *argv[]) {
     string contentname = argv[4];
 
     // Socket
-    int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock < 0) {
         cerr << "Failed to open socket" << endl;
         return EXIT_FAILURE;
@@ -64,7 +64,7 @@ int transmission(int argc, char *argv[]) {
     // Accept
     struct sockaddr_in client;
     unsigned int size_sai = sizeof(client);
-    int sock2 = accept(sock, (struct sockaddr*)&client, &size_sai);
+    sock2 = accept(sock, (struct sockaddr*)&client, &size_sai);
     if (sock2 < 0) {
         cerr << "Connection timeout" << endl;
         return EXIT_FAILURE;
@@ -102,10 +102,6 @@ int transmission(int argc, char *argv[]) {
     const char* msg = "Received update";
     send(sock2, msg, strlen(msg), 0);
 
-    // Close
-    close(sock2);
-    close(sock);
-
     return EXIT_SUCCESS;
 }
 
@@ -125,7 +121,13 @@ int main(int argc, char *argv[]) {
     window.draw(text);
     window.display();
 
-    bool success = transmission(argc, argv);
+    // Receive file and close sockets
+    int sock = -1, sock2 = -1;
+    bool success = transmission(argc, argv, sock, sock2);
+    if(sock >= 0)
+        close(sock);
+    if(sock2 >= 0)
+        close(sock2);
 
     // Show update screen for at least 5 seconds
     const auto end = std::chrono::steady_clock::now();
