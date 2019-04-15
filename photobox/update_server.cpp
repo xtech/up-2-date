@@ -113,17 +113,18 @@ int transmission(int argc, char *argv[], int sock, int sock2) {
 int main(int argc, char *argv[]) {
     // Show update screen
     sf::RenderWindow window(sf::VideoMode(1280, 800), "self-o-mat");
-    sf::Font font;
-    font.loadFromFile("AlegreyaSans-Bold.ttf");
-    sf::Text text;
-    text.setFont(font);
-    text.setString("Updating");
-    text.setCharacterSize(50);
-    text.setFillColor(sf::Color(200, 0, 0));
-    text.setStyle(sf::Text::Bold);
+    sf::Texture backgroundTexture;
+    if(!backgroundTexture.loadFromFile("updater.png")) {
+	    cerr << "Error loading background texture" << endl;
+	    return EXIT_FAILURE;
+    }
+    sf::Sprite backgroundSprite;
+    backgroundSprite.setTexture(backgroundTexture);
+    backgroundSprite.setScale(1,1);
+    backgroundSprite.setPosition(0,0);
     const auto start = std::chrono::steady_clock::now();
     window.clear();
-    window.draw(text);
+    window.draw(backgroundSprite);
     window.display();
 
     // Receive file and close sockets
@@ -140,16 +141,8 @@ int main(int argc, char *argv[]) {
     if(d < 5)
         sleep(5-d);
 
-    // Show result
-    if(!success) {
-        text.setString("Update successful");
-        text.setFillColor(sf::Color::Green);
-    } else {
-        text.setString("Update failed");
-        text.setFillColor(sf::Color::Red);
-    }
     window.clear();
-    window.draw(text);
+    window.draw(backgroundSprite);
     window.display();
     sleep(5);
     window.close();
