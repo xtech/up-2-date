@@ -3,13 +3,15 @@
 PORT=12346
 
 DIRECTORY=install_path
-NAME=dummy
-BINARY=dummy
+NAME=self-o-mat
+BINARY=build/self_o_mat
 TAR=update.tar
 
 TIMEOUT=60 #seconds
 
 BIN=$DIRECTORY/$NAME/$BINARY
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DIRECTORY/$NAME/build/libs
 
 update()
 {
@@ -41,7 +43,7 @@ do
     done
 
     echo "Starting"
-    (cd $DIRECTORY && eval $NAME/$BINARY)
+    (cd $DIRECTORY/$NAME && eval $BINARY)
     ret=$?
 
     if [ $ret -eq 1 ]
