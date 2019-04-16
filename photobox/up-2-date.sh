@@ -2,7 +2,7 @@
 
 PORT=12346
 
-DIRECTORY=install_path
+DIRECTORY=/home/pi/
 NAME=self-o-mat
 BINARY=build/self_o_mat
 TAR=update.tar
@@ -12,6 +12,7 @@ TIMEOUT=60 #seconds
 BIN=$DIRECTORY/$NAME/$BINARY
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DIRECTORY/$NAME/build/libs
+export LD_LIBRARY_PATH
 
 update()
 {
