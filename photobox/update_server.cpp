@@ -91,7 +91,6 @@ int do_update(std::string target_dir, int port, int timeout, int &sock, int &soc
         return EXIT_FAILURE;
     }
 
-    drawUpdateScreen("Waiting for connection...", "to update please open the app on your phone.");
 
     // Set timeout
     fd_set rfds;
@@ -175,15 +174,16 @@ int do_update(std::string target_dir, int port, int timeout, int &sock, int &soc
 int main(int argc, char *argv[]) {
 
     // Get args
-    if(argc != 4) {
-        drawUpdateScreen("ERROR!", "wrong number of arguments!");
-        cerr << "Wrong number of arguments. expected: port, timeout, target_dir" << endl;
+    if(argc != 5) {
+        cerr << "Wrong number of arguments. expected: port, timeout, target_dir first run [true|false]" << endl;
         return EXIT_FAILURE;
     }
     int port = atoi(argv[1]);
     int timeout = atoi(argv[2]);
     std::string target_dir = argv[3];
+    bool firstRun = std::string(argv[4]) == "true";
 
+    cout << "first run: " << firstRun << endl;
 
     // Show update screen
     font = new sf::Font();
@@ -213,7 +213,12 @@ int main(int argc, char *argv[]) {
 
 
     const auto start = std::chrono::steady_clock::now();
-    drawUpdateScreen("Waiting for connection...", "to update please open the app on your phone.");
+    if(firstRun) {
+        drawUpdateScreen("Welcome!", "Congratulations! You have successfully built your self-o-mat!\nTo set it up, please open the app and follow the instructions!");
+    } else {
+        drawUpdateScreen("Waiting for connection...", "to update please open the app on your phone.");
+    }
+
 
     // Receive file and close sockets
     int sock = -1, sock2 = -1;

@@ -14,7 +14,7 @@ update()
     echo "Updating with timeout $1"
 
     # Receive and verify tar
-    export LD_LIBRARY_PATH=`pwd` && ./update_server $PORT $1 $TARGET
+    export LD_LIBRARY_PATH=`pwd` && ./update_server $PORT $1 $TARGET $2
     if [ ! $? -eq 0 ]
     then
         return 1
@@ -26,7 +26,7 @@ do
     while [ ! -f $BIN ]
     do
         echo "Missing binary"
-        update $TIMEOUT
+        update 600 true
     done
 
     echo "Starting"
@@ -36,12 +36,12 @@ do
     if [ $ret -eq 66 ]
     then
         echo "Updating"
-	update $TIMEOUT
+	update $TIMEOUT false
     elif [ $ret -eq 0 ]
     then
 	echo "Exited normally - no update"
     else
 	echo "Exited with code $ret - updating with shorter timeout"
-	update 5
+	update 5 false
     fi
 done
