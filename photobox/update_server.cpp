@@ -114,7 +114,7 @@ int do_update(std::string target_dir, int port, int timeout, int &sock, int &soc
         cerr << "Connection timeout" << endl;
         return EXIT_FAILURE;
     }
-    drawUpdateScreen("updating...", "phone connected!");
+    drawUpdateScreen("Updating...", "phone connected!");
     cout << "Connected with " << inet_ntoa(client.sin_addr) << endl;
 
     // Receive file size
@@ -139,7 +139,7 @@ int do_update(std::string target_dir, int port, int timeout, int &sock, int &soc
         f.write(buffer, bytes_read);
         bytes_file -= bytes_read;
     }
-    drawUpdateScreen("updating...", "Received File - Verifying Signature!");
+    drawUpdateScreen("Updating...", "received file - verifying signature...");
     cout << "Received file" << endl;
 
     // Verify signature
@@ -148,9 +148,9 @@ int do_update(std::string target_dir, int port, int timeout, int &sock, int &soc
         drawUpdateScreen("ERROR!", "Invalid Signature!");
         return EXIT_FAILURE;
     }
-    drawUpdateScreen("updating...", "Signature Correct!");
+    drawUpdateScreen("Updating...", "signature valid!");
     usleep(500000);
-    drawUpdateScreen("Updating...", "unpacking update... DO NOT DISCONNECT OR RESET ANYTHING!");
+    drawUpdateScreen("Updating...", "extracting update... DO NOT DISCONNECT OR RESET ANYTHING!");
     if(system(("./extract_update.sh "+content_file+" "+" "+target_dir+" self_o_mat").c_str()) != 0) {
         drawUpdateScreen("ERROR!", "error while unpacking data. reboot and try again!");
         return EXIT_FAILURE;
@@ -160,7 +160,7 @@ int do_update(std::string target_dir, int port, int timeout, int &sock, int &soc
         drawUpdateScreen("ERROR!", "error while writing firmware. Good Luck!");
         return EXIT_FAILURE;
     }
-    drawUpdateScreen("Update Done", "Successfully Updated!");
+    drawUpdateScreen("Update Done", "success!!!");
 
     // Send acknowledgement
     const char* msg = "Received update";
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
     if(firstRun) {
         drawUpdateScreen("Welcome!", "Congratulations! You have successfully built your self-o-mat!\nTo set it up, please open the app and follow the instructions!");
     } else {
-        drawUpdateScreen("Waiting for connection...", "to update please open the app on your phone.");
+        drawUpdateScreen("Waiting for Connection...", "to update, please open the app on your phone.");
     }
 
 
