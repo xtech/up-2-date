@@ -11,9 +11,6 @@ TIMEOUT=60 #seconds
 
 BIN=$DIRECTORY/$BINARY
 
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DIRECTORY/libs
-
-export LD_LIBRARY_PATH
 
 update()
 {
@@ -45,7 +42,7 @@ do
     done
 
     echo "Starting"
-    (cd $DIRECTORY && eval ./$BINARY)
+    (export LD_LIBRARY_PATH=$DIRECTORY/libs && cd $DIRECTORY && eval ./$BINARY)
     ret=$?
 
     if [ $ret -eq 1 ]
