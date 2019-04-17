@@ -1,9 +1,9 @@
 #!/bin/sh
 
-IP=192.168.178.123
+IP=$1
 PORT=12346
 TIMEOUT=60 #seconds
-TAR=$1
+TAR=$2
 
 curl -X POST $IP:9080/update
 ./update_client $IP $PORT $TIMEOUT $TAR
