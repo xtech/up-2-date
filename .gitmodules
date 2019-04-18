@@ -1,0 +1,3 @@
+[submodule "photobox/dependencies/served"]
+	path = photobox/dependencies/served
+	url = https://github.com/meltwater/served.git

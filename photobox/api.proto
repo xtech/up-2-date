@@ -1,0 +1,14 @@
+syntax = "proto2";
+
+
+package xtech.selfomat;
+
+message UpdateStatus {
+    enum State {
+        IDLE = 0;
+        UPDATE_IN_PROGRESS = 1;
+    }
+
+    required State current_state = 1;
+    optional string current_version = 2;
+}
