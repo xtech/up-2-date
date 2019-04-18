@@ -11,7 +11,6 @@
 
 #include <SFML/Graphics.hpp>
 #include <served/served.hpp>
-#include "src/protobuf/api.pb.h"
 
 
 using namespace std;
@@ -143,33 +142,17 @@ int main(int argc, char *argv[]) {
     }
 
 
-    mux.handle("/status")
+    mux.handle("/version")
     .get([](served::response &res, const served::request &req) {
                 setHeaders(res);
-
-                xtech::selfomat::UpdateStatus status;
-                // try to lock the lock, if it fails we're updating
-                bool updating = !updateMutex.try_lock();
-                if(!updating)
-                    updateMutex.unlock();
-                if(updating) {
-                    status.set_current_state(xtech::selfomat::UpdateStatus::UPDATE_IN_PROGRESS);
-                } else {
-                    status.set_current_state(xtech::selfomat::UpdateStatus::IDLE);
-                }
 
                 // try to read the current version. if it fails don't set it
                 std::string version_file = target_dir + "/version";
                 ifstream f(version_file, ios::in);
                 string file_contents { istreambuf_iterator<char>(f), istreambuf_iterator<char>() };
 
-                if(!file_contents.empty())
-                    status.set_current_version(file_contents);
-
-                cout << status.DebugString() << endl;
-
-                served::response::stock_reply(200, res);
-                return;
+                res.set_status(200);
+                res.set_body(file_contents);
     });
 
     mux.handle("/update")
