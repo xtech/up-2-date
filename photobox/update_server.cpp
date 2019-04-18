@@ -10,6 +10,9 @@
 #include <arpa/inet.h>
 
 #include <SFML/Graphics.hpp>
+#include <served/served.hpp>
+#include "src/protobuf/api.pb.h"
+
 
 using namespace std;
 
@@ -56,120 +59,29 @@ void drawUpdateScreen(std::string title, std::string subtitle) {
     window->display();
 }
 
-int do_update(std::string target_dir, int port, int timeout, int &sock, int &sock2) {
 
-    // Socket
-    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock < 0) {
-        drawUpdateScreen("ERROR!", "failed to open socket!");
-        cerr << "Failed to open socket" << endl;
-        return EXIT_FAILURE;
-    }
+const std::map<std::string, std::string> headers = {
+        {"X-SELFOMAT-MODE", "UPDATER"},
+        {"Access-Control-Allow-Origin", "*"},
+        {"Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT"}
+};
 
-    // Bind
-    struct sockaddr_in server;
-    memset(&server, 0, sizeof(server));
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port = htons(port);
-    int opt = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        drawUpdateScreen("ERROR!", "error in setsockopt!");
-        cerr << "Error in setsockopt" << endl;
-        return EXIT_FAILURE;
-    }
-    if(bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
-        drawUpdateScreen("ERROR!", "error in bind!");
-        cerr << "Error in bind" << endl;
-        return EXIT_FAILURE;
-    }
-
-    // Listen
-    if(listen(sock, 1) < 0) {
-        drawUpdateScreen("ERROR!", "error in listen!");
-        cerr << "Error in listen" << endl;
-        return EXIT_FAILURE;
-    }
-
-
-    // Set timeout
-    fd_set rfds;
-    FD_ZERO(&rfds);
-    FD_SET(sock, &rfds);
-    struct timeval tv;
-    tv.tv_sec = timeout;
-    tv.tv_usec = 0;
-    if(select(sock+1, &rfds, (fd_set*)0, (fd_set*)0, &tv) <= 0) {
-        drawUpdateScreen("ERROR!", "connection timed out - retrying!");
-        cerr << "Error in select" << endl;
-        return EXIT_FAILURE;
-    }
-
-    // Accept
-    struct sockaddr_in client;
-    unsigned int size_sai = sizeof(client);
-    sock2 = accept(sock, (struct sockaddr*)&client, &size_sai);
-    if (sock2 < 0) {
-        drawUpdateScreen("ERROR!", "connection timed out - retrying!");
-        cerr << "Connection timeout" << endl;
-        return EXIT_FAILURE;
-    }
-    drawUpdateScreen("Updating...", "phone connected!");
-    cout << "Connected with " << inet_ntoa(client.sin_addr) << endl;
-
-    // Receive file size
-    char buffer[1024];
-    int bytes_read = recv(sock2, buffer, 4, 0);
-    if(bytes_read != 4) {
-        drawUpdateScreen("ERROR!", "invalid file size!");
-        cerr << "Wrong filesize" << endl;
-        return EXIT_FAILURE;
-    }
-    int bytes_file;
-    memcpy(&bytes_file, buffer, 4);
-
-    // Receive file
-    std::string temp_dir = UPDATE_TEMP_DIR;
-    std::string receive_file = std::string(UPDATE_TEMP_DIR)+"/"+UPDATE_FILE_NAME;
-    std::string signature_file = std::string(UPDATE_TEMP_DIR)+"/app.sig";
-    std::string content_file = std::string(UPDATE_TEMP_DIR)+"/app.tar.gz";
-    ofstream f(receive_file, ios::out | ios::binary);
-    while(bytes_file > 0) {
-        bytes_read = recv(sock2, buffer, 1024, 0);
-        f.write(buffer, bytes_read);
-        bytes_file -= bytes_read;
-    }
-    drawUpdateScreen("Updating...", "received file - verifying signature...");
-    cout << "Received file" << endl;
-
-    // Verify signature
-    system(("tar xf "+receive_file+" -C "+temp_dir+" >/dev/null 2>&1").c_str());
-    if(system(("gpg --verify "+signature_file+" "+content_file).c_str()) != 0) {
-        drawUpdateScreen("ERROR!", "Invalid Signature!");
-        return EXIT_FAILURE;
-    }
-    drawUpdateScreen("Updating...", "signature valid!");
-    usleep(500000);
-    drawUpdateScreen("Updating...", "extracting update... DO NOT DISCONNECT OR RESET ANYTHING!");
-    if(system(("./extract_update.sh "+content_file+" "+" "+target_dir+" self_o_mat").c_str()) != 0) {
-        drawUpdateScreen("ERROR!", "error while unpacking data. reboot and try again!");
-        return EXIT_FAILURE;
-    }
-    drawUpdateScreen("Updating...", "updating firmware... DO NOT DISCONNECT OR RESET ANYTHING!");
-    if(system(("./install_firmware.sh " + target_dir+"/firmware.hex").c_str()) != 0) {
-        drawUpdateScreen("ERROR!", "error while writing firmware. Good Luck!");
-        return EXIT_FAILURE;
-    }
-    drawUpdateScreen("Update Done", "success!!!");
-
-    // Send acknowledgement
-    const char* msg = "Received update";
-    send(sock2, msg, strlen(msg), 0);
-
-    return EXIT_SUCCESS;
+void setHeaders(served::response &res) {
+    for (auto const& h : headers)
+        res.set_header(h.first, h.second);
 }
 
+std::mutex updateMutex;
+std::string target_dir = "/dev/null";
 
+int timeout = 0;
+void* timeoutThread(void *ptr) {
+    sleep(timeout);
+    cout << "time is over - trying to quit" << endl;
+    served::net::server *server = static_cast<served::net::server *>(ptr);
+    server->stop();
+    return nullptr;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -178,12 +90,10 @@ int main(int argc, char *argv[]) {
         cerr << "Wrong number of arguments. expected: port, timeout, target_dir first run [true|false]" << endl;
         return EXIT_FAILURE;
     }
-    int port = atoi(argv[1]);
-    int timeout = atoi(argv[2]);
-    std::string target_dir = argv[3];
+    timeout = atoi(argv[2]);
+    target_dir = argv[3];
     bool firstRun = std::string(argv[4]) == "true";
 
-    cout << "first run: " << firstRun << endl;
 
     // Show update screen
     font = new sf::Font();
@@ -199,8 +109,8 @@ int main(int argc, char *argv[]) {
         delete(window);
         delete(logoTexture);
         delete(font);
-	    cerr << "Error loading logo texture" << endl;
-	    return EXIT_FAILURE;
+        cerr << "Error loading logo texture" << endl;
+        return EXIT_FAILURE;
     }
 
     logoSprite = new sf::Sprite();
@@ -220,28 +130,102 @@ int main(int argc, char *argv[]) {
     }
 
 
-    // Receive file and close sockets
-    int sock = -1, sock2 = -1;
-    int success = do_update(target_dir, port, timeout, sock, sock2);
-
-    if(success!=EXIT_SUCCESS) {
-        // force on for users to see errors
-        sleep(10);
-    } else {
-        sleep(1);
+    served::multiplexer mux;
+    served::net::server *server = nullptr;
+    while(true) {
+        try {
+            server = new served::net::server("0.0.0.0", "9081", mux, true);
+            break;
+        } catch (boost::exception &e) {
+            cerr << "Error opening server. Trying again in 1 sec" << endl;
+            sleep(1);
+        }
     }
 
-    if(sock >= 0)
-        close(sock);
-    if(sock2 >= 0)
-        close(sock2);
 
-    // Show update screen for at least 5 seconds
-    const auto end = std::chrono::steady_clock::now();
-    auto d = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
-    if(d < 5)
-        sleep(5-d);
+    mux.handle("/status")
+    .get([](served::response &res, const served::request &req) {
+                setHeaders(res);
 
+                xtech::selfomat::UpdateStatus status;
+                // try to lock the lock, if it fails we're updating
+                bool updating = !updateMutex.try_lock();
+                if(!updating)
+                    updateMutex.unlock();
+                if(updating) {
+                    status.set_current_state(xtech::selfomat::UpdateStatus::UPDATE_IN_PROGRESS);
+                } else {
+                    status.set_current_state(xtech::selfomat::UpdateStatus::IDLE);
+                }
+
+                // try to read the current version. if it fails don't set it
+                std::string version_file = target_dir + "/version";
+                ifstream f(version_file, ios::in);
+                string file_contents { istreambuf_iterator<char>(f), istreambuf_iterator<char>() };
+
+                if(!file_contents.empty())
+                    status.set_current_version(file_contents);
+
+                cout << status.DebugString() << endl;
+
+                served::response::stock_reply(200, res);
+                return;
+    });
+
+    mux.handle("/update")
+    .post([](served::response &res, const served::request &req) {
+        std::unique_lock<std::mutex> updateLock(updateMutex);
+
+        setHeaders(res);
+
+        drawUpdateScreen("Updating...", "phone connected!");
+
+
+        // Receive file
+        std::string temp_dir = UPDATE_TEMP_DIR;
+        std::string receive_file = std::string(UPDATE_TEMP_DIR)+"/"+UPDATE_FILE_NAME;
+        std::string signature_file = std::string(UPDATE_TEMP_DIR)+"/app.sig";
+        std::string content_file = std::string(UPDATE_TEMP_DIR)+"/app.tar.gz";
+        ofstream f(receive_file, ios::out | ios::binary);
+
+        f.write(req.body().c_str(), req.body().size());
+
+        drawUpdateScreen("Updating...", "received file - verifying signature...");
+
+        // Verify signature
+        system(("tar xf "+receive_file+" -C "+temp_dir+" >/dev/null 2>&1").c_str());
+        if(system(("gpg --verify "+signature_file+" "+content_file).c_str()) != 0) {
+            drawUpdateScreen("ERROR!", "Invalid Signature!");
+            served::response::stock_reply(400, res);
+        }
+        drawUpdateScreen("Updating...", "signature valid!");
+        usleep(500000);
+        drawUpdateScreen("Updating...", "extracting update... DO NOT DISCONNECT OR RESET ANYTHING!");
+        if(system(("./extract_update.sh "+content_file+" "+" "+target_dir+" self_o_mat").c_str()) != 0) {
+            drawUpdateScreen("ERROR!", "error while unpacking data. reboot and try again!");
+            served::response::stock_reply(400, res);
+            return;
+        }
+        drawUpdateScreen("Updating...", "updating firmware... DO NOT DISCONNECT OR RESET ANYTHING!");
+        if(system(("./install_firmware.sh " + target_dir+"/firmware.hex").c_str()) != 0) {
+            drawUpdateScreen("ERROR!", "error while writing firmware. Good Luck!");
+            served::response::stock_reply(400, res);
+            return;
+        }
+        drawUpdateScreen("Update Done", "success!!!");
+
+
+        served::response::stock_reply(200, res);
+    });
+
+
+    pthread_t handle;
+    pthread_create(&handle, nullptr, timeoutThread, server);
+
+    // 1 and blocking is needed for the gui to work (main thread will be handler thread then)
+    server->run(1, true);
+
+    cout << "server was shut down!" << endl;
 
     window->close();
 
@@ -250,5 +234,6 @@ int main(int argc, char *argv[]) {
     delete(logoTexture);
     delete(font);
 
-    return success;
+
+    return 0;
 }
