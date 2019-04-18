@@ -156,8 +156,8 @@ int main(int argc, char *argv[]) {
     });
 
     mux.handle("/update")
-    .post([](served::response &res, const served::request &req) {
-        std::unique_lock<std::mutex> updateLock(updateMutex);
+    .post([&server](served::response &res, const served::request &req) {
+        updateMutex.lock();
 
         setHeaders(res);
 
@@ -180,6 +180,8 @@ int main(int argc, char *argv[]) {
         if(system(("gpg --verify "+signature_file+" "+content_file).c_str()) != 0) {
             drawUpdateScreen("ERROR!", "Invalid Signature!");
             served::response::stock_reply(400, res);
+            updateMutex.unlock();
+            return;
         }
         drawUpdateScreen("Updating...", "signature valid!");
         usleep(500000);
@@ -187,18 +189,21 @@ int main(int argc, char *argv[]) {
         if(system(("./extract_update.sh "+content_file+" "+" "+target_dir+" self_o_mat").c_str()) != 0) {
             drawUpdateScreen("ERROR!", "error while unpacking data. reboot and try again!");
             served::response::stock_reply(400, res);
+            updateMutex.unlock();
             return;
         }
         drawUpdateScreen("Updating...", "updating firmware... DO NOT DISCONNECT OR RESET ANYTHING!");
         if(system(("./install_firmware.sh " + target_dir+"/firmware.hex").c_str()) != 0) {
             drawUpdateScreen("ERROR!", "error while writing firmware. Good Luck!");
             served::response::stock_reply(400, res);
+            updateMutex.unlock();
             return;
         }
         drawUpdateScreen("Update Done", "success!!!");
 
-
         served::response::stock_reply(200, res);
+
+        server->stop();
     });
 
 
