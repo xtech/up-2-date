@@ -130,6 +130,8 @@ void *forceUpdateThread(void *ptr) {
 
         if (fileExists(force_update_file)) {
             if(updateMutex.try_lock()) {
+                drawUpdateScreen("USB Update Found!",
+                                 "Updating ...");
                 std::string signature_file = std::string(UPDATE_TEMP_DIR) + "/app.sig";
                 std::string content_file = std::string(UPDATE_TEMP_DIR) + "/app.tar.gz";
                 auto success = doUpdate(force_update_file, UPDATE_TEMP_DIR, content_file, signature_file);
@@ -162,7 +164,10 @@ int main(int argc, char *argv[]) {
     }
     timeout = atoi(argv[2]);
     target_dir = argv[3];
-    bool firstRun = std::string(argv[4]) == "true";
+
+    std::string mode = argv[4];
+    bool firstRun = mode == "FIRST";
+    bool boot = mode == "BOOT";
 
     force_update_file = argv[5];
 
@@ -195,11 +200,15 @@ int main(int argc, char *argv[]) {
 
 
     const auto start = std::chrono::steady_clock::now();
-    if (firstRun) {
-        drawUpdateScreen("Welcome!",
-                         "Congratulations! You have successfully built your self-o-mat!\nTo set it up, please open the app and follow the instructions!");
+    if(boot) {
+        drawUpdateScreen("", "Starting Up ...");
     } else {
-        drawUpdateScreen("Waiting for Connection...", "to update, please open the app on your phone.");
+        if (firstRun) {
+            drawUpdateScreen("Welcome!",
+                             "Congratulations! You have successfully built your self-o-mat!\nTo set it up, please open the app and follow the instructions!");
+        } else {
+            drawUpdateScreen("Waiting for Connection...", "to update, please open the app on your phone.");
+        }
     }
 
 

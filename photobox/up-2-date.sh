@@ -25,12 +25,12 @@ update()
 if [ -f $BIN ]
 then
     # We have a binary update once on boot with 5 sec TO
-    update 5 false
+    update 5 BOOT
 else
     while [ ! -f $BIN ]
     do
         echo "Missing binary"
-        update 600 true
+        update 600 FIRST
     done
 fi
 
@@ -44,12 +44,12 @@ do
     if [ $ret -eq 66 ]
     then
         echo "Updating"
-	update $TIMEOUT false
+	update $TIMEOUT NORM
     elif [ $ret -eq 0 ]
     then
 	echo "Exited normally - no update"
     else
 	echo "Exited with code $ret - updating with shorter timeout"
-	update 5 false
+	update 5 NORM
     fi
 done
