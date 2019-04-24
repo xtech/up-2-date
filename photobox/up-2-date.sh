@@ -22,13 +22,20 @@ update()
     fi
 }
 
-while [ true ]
-do
+if [ -f $BIN ]
+then
+    # We have a binary update once on boot with 5 sec TO
+    update 5 false
+else
     while [ ! -f $BIN ]
     do
         echo "Missing binary"
         update 600 true
     done
+fi
+
+while [ true ]
+do
 
     echo "Starting"
     (export HOME=/opt && export LD_LIBRARY_PATH=$TARGET/libs && cd $TARGET && eval ./$BINARY)
