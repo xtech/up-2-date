@@ -18,7 +18,7 @@
 using namespace std;
 
 #define UPDATE_TEMP_DIR "/tmp"
-#define UPDATE_FILE_NAME "update.tar"
+#define UPDATE_FILE_NAME "selfomat.update"
 
 
 sf::RenderWindow *window;
@@ -98,8 +98,17 @@ void *timeoutThread(void *ptr) {
 }
 
 bool doUpdate(std::string receive_file, std::string temp_dir, std::string content_file, std::string signature_file) {
+    // Decrypt the received file
+    drawUpdateScreen("Updating...", "received file - decrypting...");
+    if(system(("gpg --batch --yes --output /tmp/update.tar.gz --decrypt "+receive_file).c_str()) != 0) {
+        drawUpdateScreen("ERROR!", "Could not decrypt update!");
+        return false;
+    }
+
+
     // Verify signature
-    system(("tar xf " + receive_file + " -C " + temp_dir + " >/dev/null 2>&1").c_str());
+    drawUpdateScreen("Updating...", "received file - verifying signature...");
+    system(("tar xf /tmp/update.tar.gz -C " + temp_dir + " >/dev/null 2>&1").c_str());
     if (system(("gpg --verify " + signature_file + " " + content_file).c_str()) != 0) {
         drawUpdateScreen("ERROR!", "Invalid Signature!");
         return false;
@@ -256,7 +265,7 @@ int main(int argc, char *argv[]) {
 
                 f.write(req.body().c_str(), req.body().size());
 
-                drawUpdateScreen("Updating...", "received file - verifying signature...");
+
 
                 auto success = doUpdate(receive_file, temp_dir, content_file, signature_file);
 

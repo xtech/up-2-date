@@ -8,7 +8,7 @@ TIMEOUT=60 #seconds
 
 BIN=$TARGET/$BINARY
 FIRMWARE_NAME=$TARGET/firmware.hex
-FORCE_DIR=/media/usb/update.tar
+FORCE_DIR=/media/usb/selfomat.update
 
 update()
 {
