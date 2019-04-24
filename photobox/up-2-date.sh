@@ -8,13 +8,14 @@ TIMEOUT=60 #seconds
 
 BIN=$TARGET/$BINARY
 FIRMWARE_NAME=$TARGET/firmware.hex
+FORCE_DIR=/media/usb/update.tar
 
 update()
 {
     echo "Updating with timeout $1"
 
     # Receive and verify tar
-    export LD_LIBRARY_PATH=`pwd` && ./update_server $PORT $1 $TARGET $2
+    export LD_LIBRARY_PATH=`pwd` && ./update_server $PORT $1 $TARGET $2 $FORCE_DIR
     if [ ! $? -eq 0 ]
     then
         return 1
