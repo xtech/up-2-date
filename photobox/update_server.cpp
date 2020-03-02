@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    window = new sf::RenderWindow(sf::VideoMode(1280, 800), "self-o-mat");
+    window = new sf::RenderWindow(sf::VideoMode(1280, 800), "self-o-mat", sf::Style::Fullscreen);
     window->setActive(false);
     logoTexture = new sf::Texture();
     if (!logoTexture->loadFromFile("./assets/logo.png")) {
@@ -214,9 +214,9 @@ int main(int argc, char *argv[]) {
     } else {
         if (firstRun) {
             drawUpdateScreen("Welcome!",
-                             "Congratulations! You have successfully built your self-o-mat!\nTo set it up, please open the app and follow the instructions!");
+                             "Congratulations! You have successfully built your self-o-mat!\nPlug in a USB drive containing the selfomat.update file to install the firmware.");
         } else {
-            drawUpdateScreen("Waiting for Connection...", "to update, please open the app on your phone.");
+            drawUpdateScreen("Waiting for Connection...", "plug in a USB drive containing the selfomat.update file.");
         }
     }
 
