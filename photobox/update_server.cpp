@@ -109,7 +109,7 @@ bool doUpdate(std::string receive_file, std::string temp_dir, std::string conten
     // Verify signature
     drawUpdateScreen("Updating...", "received file - verifying signature...");
     system(("tar xf /tmp/update.tar.gz -C " + temp_dir + " >/dev/null 2>&1").c_str());
-    if (system(("gpg --verify " + signature_file + " " + content_file).c_str()) != 0) {
+    if (system(("gpg --verify --no-default-keyring --keyring ./verification_keyring.ring " + signature_file + " " + content_file).c_str()) != 0) {
         drawUpdateScreen("ERROR!", "Invalid Signature!");
         return false;
     }
