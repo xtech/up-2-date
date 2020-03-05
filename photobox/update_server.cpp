@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
             drawUpdateScreen("Welcome!",
                              "Congratulations! You have successfully built your self-o-mat!\nPlug in a USB drive containing the selfomat.update file to install the firmware.");
         } else {
-            drawUpdateScreen("Waiting for Connection...", "plug in a USB drive containing the selfomat.update file.");
+            drawUpdateScreen("Waiting for Connection...", "plug in a USB drive containing the selfomat.update file.\nUpdater Version 2.1");
         }
     }
 

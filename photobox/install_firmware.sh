@@ -8,7 +8,7 @@ echo "Installing firmware in $FIRMWARE_NAME"
 if [ -f $FIRMWARE_NAME ]
 then
 echo "We have a firmware."
-avrdude -b38400 -P /dev/ttyS0 -c arduino -p atmega328p -v -U flash:w:$FIRMWARE_NAME:i
+sudo avrdude -C ./avrdude_updater.conf -c linuxgpio -p atmega328p -v -U flash:w:$FIRMWARE_NAME:i
 else
 echo "No firmware included."
 fi
